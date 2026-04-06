@@ -1,1 +1,479 @@
-hi
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Chrome Dino RL Agent - 자율주행 공룡 게임을 위한 오프라인 딥러닝(DQN/D3QN) 기반 강화학습 프로젝트">
+    <title>Chrome Dino RL Agent | Deep Reinforcement Learning</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Outfit:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0b0d10;
+            --surface-color: rgba(255, 255, 255, 0.03);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --text-primary: #f0f4f8;
+            --text-secondary: #9aa2ac;
+            --accent-glow: 0 0 40px rgba(0, 210, 255, 0.3);
+            --accent-primary: #00d2ff;
+            --accent-secondary: #3a7bd5;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: var(--font-heading);
+            font-weight: 700;
+        }
+
+        /* Utilities */
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: inline-block;
+        }
+
+        .glass-panel {
+            background: var(--surface-color);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--surface-border);
+            border-radius: 24px;
+            padding: 2rem;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5), var(--accent-glow);
+            border-color: rgba(0, 210, 255, 0.2);
+        }
+
+        img {
+            max-width: 100%;
+            border-radius: 12px;
+            display: block;
+        }
+
+        /* Header */
+        header {
+            padding: 2rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            background: rgba(11, 13, 16, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--surface-border);
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 900;
+            font-family: var(--font-heading);
+            letter-spacing: -0.5px;
+        }
+
+        .nav-links a {
+            color: var(--text-primary);
+            text-decoration: none;
+            margin-left: 2rem;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-primary);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 12rem 0 6rem;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+            font-weight: 900;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-family: var(--font-heading);
+            letter-spacing: 0.5px;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 210, 255, 0.4);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 6px 25px rgba(0, 210, 255, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--surface-border);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+
+        .hero-image-wrapper {
+            position: relative;
+        }
+
+        .hero-image-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, rgba(0, 210, 255, 0.2) 0%, transparent 70%);
+            z-index: -1;
+        }
+
+        .hero-image {
+            animation: float 6s ease-in-out infinite;
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* Features Section */
+        .features {
+            padding: 6rem 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-panel h3 {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .glass-panel p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Tech Details Section */
+        .tech-details {
+            padding: 6rem 0;
+        }
+
+        .tech-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 4rem;
+            align-items: center;
+            margin-bottom: 6rem;
+        }
+
+        .tech-row:nth-child(even) {
+            grid-template-columns: 1fr 1fr;
+            direction: rtl;
+        }
+        
+        .tech-row:nth-child(even) .tech-text {
+            direction: ltr;
+        }
+
+        .tech-image img {
+            border: 1px solid var(--surface-border);
+            box-shadow: var(--accent-glow);
+        }
+
+        .tech-text h3 {
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tech-text p {
+            color: var(--text-secondary);
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+        }
+
+        .tech-tags {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: rgba(0, 210, 255, 0.1);
+            color: var(--accent-primary);
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+        }
+
+        /* Footer */
+        footer {
+            border-top: 1px solid var(--surface-border);
+            padding: 3rem 0;
+            text-align: center;
+            color: var(--text-secondary);
+            margin-top: 4rem;
+        }
+
+        .highlight {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            .hero, .tech-row, .tech-row:nth-child(even) {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+                direction: ltr;
+                text-align: center;
+            }
+            .hero {
+                padding-top: 8rem;
+                min-height: auto;
+            }
+            .hero-content h1 { font-size: 3rem; }
+            .cta-buttons { justify-content: center; }
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container nav">
+            <div class="logo">Dino<span class="gradient-text">RL</span></div>
+            <div class="nav-links">
+                <a href="#features">기능</a>
+                <a href="#architecture">아키텍처</a>
+                <a href="https://github.com/사용자이름/dino_rein_learning">GitHub 연동</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <!-- Hero Section -->
+        <section class="container hero">
+            <div class="hero-content">
+                <h1>자율적으로 진화하는 <br><span class="gradient-text">크롬 공룡 에이전트</span></h1>
+                <p>심층 강화학습(Deep Reinforcement Learning) 기반. DQN 및 D3QN 아키텍처를 이용하여 오프라인 공룡 게임(chrome://dino)을 정복하는 AI의 진화를 확인하세요.</p>
+                <div class="cta-buttons">
+                    <a href="#architecture" class="btn btn-primary">아키텍처 보기</a>
+                    <a href="https://github.com/사용자이름/dino_rein_learning" class="btn btn-secondary" target="_blank" rel="noopener noreferrer">GitHub 방문하기</a>
+                </div>
+            </div>
+            <div class="hero-image-wrapper">
+                <img src="./assets/dino_rl_hero.png" alt="Dino RL Hero 3D Render" class="hero-image">
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section id="features" class="container features">
+            <div class="section-header">
+                <h2>핵심 <span class="gradient-text">특징 및 기술</span></h2>
+                <p>안정적인 학습과 최고의 성능을 달성하기 위해 구현된 고급 분석/처리 모듈들</p>
+            </div>
+            
+            <div class="features-grid">
+                <div class="glass-panel">
+                    <div class="feature-icon">👁️</div>
+                    <h3>실시간 화면 분석</h3>
+                    <p>OpenCV를 활용해 게임 화면의 픽셀 데이터를 실시간 캡처합니다. Canny Edge 및 차분 필터 전처리로 환경 변수에 강건합니다.</p>
+                </div>
+                <div class="glass-panel">
+                    <div class="feature-icon">🧠</div>
+                    <h3>D3QN 아키텍처</h3>
+                    <p>상태 가치와 행동 이득을 분리하는 Dueling Double DQN을 적용해 보다 정교한 판단 능력을 갖추었습니다.</p>
+                </div>
+                <div class="glass-panel">
+                    <div class="feature-icon">⚡</div>
+                    <h3>하드웨어 가속</h3>
+                    <p>CUDA 및 Apple MPS 프로세싱 자원을 완전히 활용하도록 자동 감지 및 텐서 연산 최적화를 수행합니다.</p>
+                </div>
+                <div class="glass-panel">
+                    <div class="feature-icon">📊</div>
+                    <h3>경험 기반 재현 (PER)</h3>
+                    <p>하이브리드 듀얼 버퍼 메모리로 오차가 높은 중요한 기억들을 선별해 재학습하는 효율적 샘플링 로직을 탑재했습니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Technical Deep Dive -->
+        <section id="architecture" class="container tech-details">
+            <div class="section-header">
+                <h2>기술 파이프라인 <span class="gradient-text">Deep Dive</span></h2>
+            </div>
+            
+            <!-- Vision Row -->
+            <div class="tech-row">
+                <div class="tech-image glass-panel">
+                    <img src="./assets/dino_vision_process.png" alt="Vision Processing Screen">
+                </div>
+                <div class="tech-text">
+                    <h3>비전 코어 모델 <span class="gradient-text">최적화</span></h3>
+                    <p>게임 중 주·야간 테마 변경으로 인한 픽셀 역전 노이즈를 회피하기 위해 화면의 윤곽선만 도출하는 검출(Edge Detection) 기술을 사용합니다. AI가 순수 객체의 위치 정보에만 집중하게 만들어 불필요한 환경 변동성을 차단합니다.</p>
+                    <div class="tech-tags">
+                        <span class="tag">OpenCV 4.x</span>
+                        <span class="tag">Canny Edge</span>
+                        <span class="tag">MSS Capture</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Neural Net Row -->
+            <div class="tech-row">
+                <div class="tech-image glass-panel">
+                    <img src="./assets/dino_neural_net.png" alt="Neural Network Abstract">
+                </div>
+                <div class="tech-text">
+                    <h3>Deep Q-Network <span class="gradient-text">설계</span></h3>
+                    <p>연속된 합성곱(CNN)의 강력한 특징 추출 구조를 기반으로 구성되었습니다. 엡실론-그리디 감소 추세에 맞춰 타겟 네트워크 소프트 업데이트와 클리핑(Loss & Gradient)을 활용해 최상의 수렴 상태에 도달합니다.</p>
+                    <div class="tech-tags">
+                        <span class="tag">PyTorch 2.0</span>
+                        <span class="tag">Target Network</span>
+                        <span class="tag">Huber Loss</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>Developed for <span class="highlight">Deep Reinforcement Learning Research</span>. Hosted on GitHub Pages.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Interactive hover effect for glass panels (mousemove gradient spotlight)
+        const panels = document.querySelectorAll('.glass-panel');
+        panels.forEach(panel => {
+            panel.addEventListener('mousemove', (e) => {
+                const rect = panel.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                panel.style.background = `rgba(255, 255, 255, 0.03) radial-gradient(circle at ${x}px ${y}px, rgba(0, 210, 255, 0.1) 0%, transparent 60%)`;
+            });
+            panel.addEventListener('mouseleave', () => {
+                panel.style.background = `var(--surface-color)`;
+            });
+        });
+    </script>
+</body>
+</html>
